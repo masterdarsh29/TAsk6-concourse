@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import psycopg2
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
+import argparse
  
 def login_to_screener(email, password):
     session = requests.Session()
@@ -12,8 +13,8 @@ def login_to_screener(email, password):
     soup = BeautifulSoup(login_page.content, 'html.parser')
     csrf_token = soup.find('input', {'name': 'csrfmiddlewaretoken'})['value']
     login_payload = {
-        'username': 'darshan.patil@godigitaltc.com',
-        'password': 'Darshan123',
+        'username': email,
+        'password': password,
         'csrfmiddlewaretoken': csrf_token
     }
     headers = {
@@ -66,18 +67,20 @@ def save_to_postgres(df, table_name, db, user, password, host, port):
         print(f"Error: {e}")
     finally:
         engine.dispose()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--email", required=True)
+    parser.add_argument("--password", required=True)
+    parser.add_argument("--table_name", default="financial_data")
+    parser.add_argument("--db", default="Task6")
+    parser.add_argument("--user", default="Darshan")
+    parser.add_argument("--pw", default="Darshan123")
+    parser.add_argument("--host", default="192.168.3.43")
+    parser.add_argument("--port", default="5432")
+    args = parser.parse_args()
+    session = login_to_screener(args.email, args.password)
+    if session:
+        df = scrape_reliance_data(session)
+        if df is not None:
+            save_to_postgres(df, args.table_name, args.db, args.user, args.pw, args.host, args.port)
  
-email = "darshan.patil@godigitaltc.com"
-password = "Darshan123"
-table_name = "financial_data"
-db = "Task6"
-user = "Darshan"
-pw = "Darshan123"
-host = "localhost"
-port = "5432"
- 
-session = login_to_screener(email, password)
-if session:
-    df = scrape_reliance_data(session)
-    if df is not None:
-        save_to_postgres(df, table_name, db, user, pw, host, port)
