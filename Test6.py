@@ -58,10 +58,18 @@ def scrape_reliance_data(session):
         print("Failed to retrieve Reliance data")
         return None
 def transform_data(df):
+    # Remove commas and spaces from numeric columns
+    df = df.apply(lambda x: x.str.replace(',', '').str.replace(' ', ''))
+    
+    # Convert to numeric, replacing non-numeric values with NaN
+    df = df.apply(pd.to_numeric, errors='coerce')
+    
     # Calculate average of each row
     df['average'] = df.mean(axis=1)
+    
     # Select only the transformed column
     transformed_df = df[['average']]
+    
     return transformed_df
  
 def save_to_postgres(df, table_name, db, user, password, host, port):
