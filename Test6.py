@@ -65,9 +65,27 @@ def scrape_reliance_data(session):
         print("Failed to retrieve Reliance data")
         return None
     
+def clean_data(value):
+    if isinstance(value, str):
+        value = value.replace("+", "").replace("%", "").replace(",", "").strip()
+        if value.replace('.', '', 1).isdigit():
+            try:
+                return float(value)
+            except ValueError:
+                return None
+        return value
+    return value
+
 def save_to_postgres(df, table_name, db, user, password, host, port):
-    engine = create_engine(f"postgresql://{user}:{password}@{host}/{db}", connect_args={'port': port})
+    engine = create_engine(f"postgresql://{user}:{password}@{host}:{port}/{db}")
     try:
+        # Clean and convert data in all columns except the first one
+        for col in df.columns[1:]:
+            df[col] = df[col].apply(clean_data)
+        
+        # Handle missing or inappropriate values
+        df = df.fillna(0)
+        
         df.to_sql(table_name, con=engine, if_exists='replace', index=False)
         print("Data saved to Postgres")
     except SQLAlchemyError as e:
