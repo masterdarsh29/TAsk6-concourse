@@ -1,3 +1,4 @@
+
 import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
@@ -52,6 +53,9 @@ if data is not None:
         # Log and print the cleaned and transposed DataFrame
         logging.info("Cleaned and transposed DataFrame with 'id' column:")
         print(df_table)
+
+        # Save the cleaned and transposed DataFrame to a CSV file
+        df_table.to_csv('reliance_financial_data.csv', index=False)
  
         # Load data to Postgres
         db_host = "192.168.3.43"
