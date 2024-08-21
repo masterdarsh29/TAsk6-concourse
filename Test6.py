@@ -57,11 +57,15 @@ def scrape_reliance_data(session):
     else:
         print("Failed to retrieve Reliance data")
         return None
+
  
 def save_to_postgres(df, table_name, db, user, password, host, port):
+    # Transpose the DataFrame
+    df_transposed = df.transpose()
+    
     engine = create_engine(f"postgresql://{user}:{password}@{host}/{db}", connect_args={'port': port})
     try:
-        df.to_sql(table_name, con=engine, if_exists='replace', index=False)
+        df_transposed.to_sql(table_name, con=engine, if_exists='replace', index=False)
         print("Data saved to Postgres")
     except SQLAlchemyError as e:
         print(f"Error: {e}")
