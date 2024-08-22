@@ -53,10 +53,8 @@ def scrape_reliance_data(session):
                 print(f"Row data length mismatch: {cols}")
         df = pd.DataFrame(row_data, columns=headers)
         if not df.empty:
-            df.columns = ['Year'] + df.columns[1:].tolist()
-            df = df.rename(columns={'Narration': 'Year', 'Year': 'year'})
-            # # Remove the narration row header
-            # df = df.drop(df[df['year'] == 'Narration'].index, errors='ignore')
+            # Remove the narration row
+            df = df.drop(df[df['year'] == 'Narration'].index, errors='ignore')
             # Remove the TTM row
             df = df.drop(df[df['year'] == 'TTM'].index, errors='ignore')
         df_transposed = df.set_index('year').T
