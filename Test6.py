@@ -1,3 +1,4 @@
+
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -92,8 +93,8 @@ def save_to_postgres(df, table_name, db, user, password, host, port):
  
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--email", required=True)
-    parser.add_argument("--password", required=True)
+    parser.add_argument("--email", default="darshan.patil@godigitaltc.com")
+    parser.add_argument("--password", default="Darshan123")
     parser.add_argument("--table_name", default="company_data")
     parser.add_argument("--db", default="Task6")
     parser.add_argument("--user", default="Nikita")
@@ -106,4 +107,4 @@ if __name__ == "__main__":
         df = scrape_reliance_data(session)
         if df is not None:
             save_to_postgres(df, args.table_name, args.db, args.user, args.pw, args.host, args.port)
-has context menu
+
