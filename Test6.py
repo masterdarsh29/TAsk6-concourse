@@ -1,3 +1,4 @@
+
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -61,8 +62,16 @@ def scrape_reliance_data(session):
         df_transposed.columns = [col if col else 'Unknown' for col in df_transposed.columns]  
         df_transposed = df_transposed.replace('', 0)  
         df_transposed = df_transposed.replace(np.nan, 0)  
+         # Added data cleaning step
+        cleaned_columns = []
+        for col in df_transposed.columns:
+            cleaned_col = col.replace(' ', '_').replace('+', '').strip()
+            cleaned_columns.append(cleaned_col)
+        df_transposed.columns = cleaned_columns
+
         for col in df_transposed.columns[1:]:
             df_transposed[col] = df_transposed[col].apply(clean_data)
+        
         print(df_transposed.columns)  # Print the column names
         df_transposed = df_transposed[df_transposed['year'] != 'TTM']  # Drop the TTM row
         print(df_transposed.head())
@@ -70,6 +79,7 @@ def scrape_reliance_data(session):
     else:
         print("Failed to retrieve Reliance data")
         return None
+        
  
 def clean_data(value):
     if isinstance(value, str):
