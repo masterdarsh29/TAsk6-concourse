@@ -67,7 +67,6 @@ def scrape_reliance_data(session):
     else:
         print("Failed to retrieve Reliance data")
         return None
- 
 def clean_data(value):
     if isinstance(value, str):
         value = value.replace("+", "").replace("%", "").replace(",", "").replace(" ", "").strip()
@@ -75,26 +74,17 @@ def clean_data(value):
             try:
                 return float(value)
             except ValueError:
-                return 0.0  
-        return value
+                return 0.0
+        else:
+            return 0.0  # Return 0.0 for non-numeric strings
     return value
 
-def clean_data(value):
-    if isinstance(value, str):
-        value = value.replace("+", "").replace("%", "").replace(",", "").replace(" ", "").strip()
-        if value.replace('.', '', 1).isdigit():
-            try:
-                return float(value)
-            except ValueError:
-                return 0.0  # Return 0.0 for non-numeric values
-        return value
-    return value
- 
 def save_to_postgres(df, table_name, db, user, password, host, port):
     engine = create_engine(f"postgresql://{user}:{password}@{host}:{port}/{db}")
     try:
         for col in df.columns[1:]:
             df[col] = df[col].apply(clean_data)
+        df = df.apply(pd.to_numeric, errors='coerce')  # Convert all columns to numeric
         df = df.fillna(0)
         df.to_sql(table_name, con=engine, if_exists='replace', index=False)
         print("Data saved to Postgres")
