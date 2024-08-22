@@ -1,4 +1,5 @@
 
+
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -30,7 +31,7 @@ def login_to_screener(email, password):
     else:
         print("Login failed")
         return None
- 
+
 def scrape_reliance_data(session):
     search_url = "https://www.screener.in/company/RELIANCE/consolidated/"
     search_response = session.get(search_url)
@@ -54,9 +55,11 @@ def scrape_reliance_data(session):
         if not df.empty:
             df.columns = ['Year'] + df.columns[1:].tolist()
             df = df.rename(columns={'Narration': 'Year', 'Year': 'year'})
-        df_transposed = df.transpose().reset_index()
-        df_transposed.rename(columns={'index': 'Narration'}, inplace=True)
-        df_transposed = df_transposed.reset_index(drop=True)
+            # Remove the narration row header
+            df = df.drop(df[df['year'] == 'Narration'].index, errors='ignore')
+            # Remove the TTM row
+            df = df.drop(df[df['year'] == 'TTM'].index, errors='ignore')
+        df_transposed = df.set_index('year').T
         df_transposed = df_transposed.replace('', 0)  # Replace empty strings with 0
         df_transposed = df_transposed.replace(np.nan, 0)  # Replace null values with 0
         print(df_transposed.head())
@@ -75,7 +78,7 @@ def clean_data(value):
                 return 0.0  # Return 0.0 for non-numeric values
         return value
     return value
- 
+
 def save_to_postgres(df, table_name, db, user, password, host, port):
     engine = create_engine(f"postgresql://{user}:{password}@{host}:{port}/{db}")
     try:
