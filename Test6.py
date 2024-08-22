@@ -61,6 +61,8 @@ def scrape_reliance_data(session):
         df_transposed.columns = [col if col else 'Unknown' for col in df_transposed.columns]  
         df_transposed = df_transposed.replace('', 0)  
         df_transposed = df_transposed.replace(np.nan, 0)  
+        df_transposed = df_transposed.applymap(clean_data)
+        df_transposed = df_transposed.astype(float)
         print(df_transposed.head())
         return df_transposed
     else:
