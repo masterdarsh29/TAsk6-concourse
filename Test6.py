@@ -1,5 +1,3 @@
-
-
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -31,7 +29,7 @@ def login_to_screener(email, password):
     else:
         print("Login failed")
         return None
-
+ 
 def scrape_reliance_data(session):
     search_url = "https://www.screener.in/company/RELIANCE/consolidated/"
     search_response = session.get(search_url)
@@ -40,9 +38,8 @@ def scrape_reliance_data(session):
         soup = BeautifulSoup(search_response.content, 'html.parser')
         table1 = soup.find('section', {'id': 'profit-loss'})
         table = table1.find('table')
-        headers = [th.text.strip() or f'Column_{i}' for i, th in enumerate(table.find_all('th'))]
+        headers = [th.text.strip() for th in table.find_all('th')]
         rows = table.find_all('tr')
-        print("Extracted Headers:", headers)
         row_data = []
         for row in rows[1:]:
             cols = row.find_all('td')
@@ -53,15 +50,18 @@ def scrape_reliance_data(session):
                 print(f"Row data length mismatch: {cols}")
         df = pd.DataFrame(row_data, columns=headers)
         if not df.empty:
-            # Rename the first column to 'year'
-            df = df.rename(columns={df.columns[0]: 'year'})
-            # Remove the narration row
-            df = df.drop(df[df['year'] == 'Narration'].index, errors='ignore')
-            # Remove the TTM row
+            df.columns = ['Year'] + df.columns[1:].tolist()
+            df = df.rename(columns={'Narration': 'Year', 'Year': 'year'})
             df = df.drop(df[df['year'] == 'TTM'].index, errors='ignore')
-        df_transposed = df.set_index('year').T
-        df_transposed = df_transposed.replace('', 0)  # Replace empty strings with 0
-        df_transposed = df_transposed.replace(np.nan, 0)  # Replace null values with 0
+        df_transposed = df.transpose().reset_index()
+        df_transposed.rename(columns={'index': 'Narration'}, inplace=True)
+        df_transposed = df_transposed.reset_index(drop=True)
+        df_transposed.columns = [col.strip() for col in df_transposed.iloc[0]]  
+        df_transposed = df_transposed[1:]  
+        df_transposed = df_transposed.reset_index(drop=True)
+        df_transposed.columns = [col if col else 'Unknown' for col in df_transposed.columns]  
+        df_transposed = df_transposed.replace('', 0)  
+        df_transposed = df_transposed.replace(np.nan, 0)  
         print(df_transposed.head())
         return df_transposed
     else:
@@ -75,17 +75,26 @@ def clean_data(value):
             try:
                 return float(value)
             except ValueError:
-                return 0.0  # Return 0.0 for non-numeric values
+                return 0.0  
         return value
     return value
 
+def clean_data(value):
+    if isinstance(value, str):
+        value = value.replace("+", "").replace("%", "").replace(",", "").replace(" ", "").strip()
+        if value.replace('.', '', 1).isdigit():
+            try:
+                return float(value)
+            except ValueError:
+                return 0.0  # Return 0.0 for non-numeric values
+        return value
+    return value
+ 
 def save_to_postgres(df, table_name, db, user, password, host, port):
     engine = create_engine(f"postgresql://{user}:{password}@{host}:{port}/{db}")
     try:
-        # Clean and convert data in all columns except the first one
         for col in df.columns[1:]:
             df[col] = df[col].apply(clean_data)
-        # Handle missing or inappropriate values
         df = df.fillna(0)
         df.to_sql(table_name, con=engine, if_exists='replace', index=False)
         print("Data saved to Postgres")
@@ -93,7 +102,7 @@ def save_to_postgres(df, table_name, db, user, password, host, port):
         print(f"Error: {e}")
     finally:
         engine.dispose()
- 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--email", default="darshan.patil@godigitaltc.com")
