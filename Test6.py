@@ -61,13 +61,12 @@ def scrape_reliance_data(session):
         df_transposed.columns = [col if col else 'Unknown' for col in df_transposed.columns]  
         df_transposed = df_transposed.replace('', 0)  
         df_transposed = df_transposed.replace(np.nan, 0)  
-        df_transposed = df_transposed.applymap(clean_data)
-        df_transposed = df_transposed.astype(float)
         print(df_transposed.head())
         return df_transposed
     else:
         print("Failed to retrieve Reliance data")
         return None
+ 
 def clean_data(value):
     if isinstance(value, str):
         value = value.replace("+", "").replace("%", "").replace(",", "").replace(" ", "").strip()
@@ -75,17 +74,15 @@ def clean_data(value):
             try:
                 return float(value)
             except ValueError:
-                return 0.0
-        else:
-            return 0.0  # Return 0.0 for non-numeric strings
+                return 0.0  
+        return value
     return value
-
+ 
 def save_to_postgres(df, table_name, db, user, password, host, port):
     engine = create_engine(f"postgresql://{user}:{password}@{host}:{port}/{db}")
     try:
         for col in df.columns[1:]:
             df[col] = df[col].apply(clean_data)
-        df = df.apply(pd.to_numeric, errors='coerce')  # Convert all columns to numeric
         df = df.fillna(0)
         df.to_sql(table_name, con=engine, if_exists='replace', index=False)
         print("Data saved to Postgres")
@@ -93,7 +90,7 @@ def save_to_postgres(df, table_name, db, user, password, host, port):
         print(f"Error: {e}")
     finally:
         engine.dispose()
-
+ 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--email", default="darshan.patil@godigitaltc.com")
@@ -110,4 +107,3 @@ if __name__ == "__main__":
         df = scrape_reliance_data(session)
         if df is not None:
             save_to_postgres(df, args.table_name, args.db, args.user, args.pw, args.host, args.port)
-
