@@ -114,7 +114,7 @@ if __name__ == "__main__":
     parser.add_argument("--db", default="Task7")
     parser.add_argument("--user", default="Darshan")
     parser.add_argument("--pw", default="Darshan123")
-    parser.add_argument("--host", default="192.168.3.45")
+    parser.add_argument("--host", default="192.168.129.12")
     parser.add_argument("--port", default="5432")
     args = parser.parse_args()
     session = login_to_screener(args.email, args.password)
