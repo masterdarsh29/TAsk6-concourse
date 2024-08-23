@@ -111,7 +111,7 @@ if __name__ == "__main__":
     parser.add_argument("--email", default="darshan.patil@godigitaltc.com")
     parser.add_argument("--password", default="Darshan123")
     parser.add_argument("--table_name", default="profit_loss_data")
-    parser.add_argument("--db", default="Task")
+    parser.add_argument("--db", default="Taskk")
     parser.add_argument("--user", default="Darshan")
     parser.add_argument("--pw", default="Darshan123")
     parser.add_argument("--host", default="192.168.20.12")
